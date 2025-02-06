@@ -1,0 +1,3 @@
+data_ingesting/venv/
+data_ingesting/.env
+data_ingesting/.cache

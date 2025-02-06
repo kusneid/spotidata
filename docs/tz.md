@@ -1,0 +1,1 @@
+/home/kusneid/Markdowns/de/tz.md

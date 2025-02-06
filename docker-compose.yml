@@ -1,0 +1,21 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+  spotify_ingest:
+    build:
+      context: ./data_ingesting
+      dockerfile: Dockerfile
+    container_name: spotify_ingest
+    env_file: data_ingesting/.env
+    depends_on:
+      - clickhouse
+
+volumes:
+  clickhouse_data: {}

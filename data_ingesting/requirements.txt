@@ -1,0 +1,12 @@
+certifi==2025.1.31
+charset-normalizer==3.4.1
+clickhouse-connect==0.8.15
+idna==3.10
+lz4==4.4.3
+python-dotenv==1.0.1
+pytz==2025.1
+redis==5.2.1
+requests==2.32.3
+spotipy==2.25.0
+urllib3==2.3.0
+zstandard==0.23.0
