@@ -1,31 +1,62 @@
-import os
-import clickhouse_connect
-from dotenv import load_dotenv
-import spotipy 
-from spotipy.oauth2 import SpotifyClientCredentials
+import main
+import sys
+import time
+from loguru import logger
 
 
-client = clickhouse_connect.get_client( # Connect to Clickhouse
-    host='clickhouse',
-    port=8123,
-    username='default',
-    password=''
-)
-
-load_dotenv() # Load environment variables
-CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-
-def init_spotify():     # Initialize Spotify client
-    return spotipy.Spotify(
-        auth_manager=SpotifyClientCredentials(
-            client_id=CLIENT_ID,
-            client_secret=CLIENT_SECRET
-        )
+def create_tables_with_tracks(client):
+    q = """
+    CREATE TABLE IF NOT EXISTS default.tracks (
+        track_id String PRIMARY KEY,
+        track_name String,
+        artist String,
+        popularity UInt32
     )
+    ORDER BY track_id
+    """
+    client.command(q)
 
-def main():
-    init_spotify()
+def fetch_tracks(spotify_client, query):
+    data = []
+    offset = 0
+    limit = 50
+    while offset < 100:
+        batch = min(limit, 100 - offset)
+        r = spotify_client.search(q=query, type='track', limit=batch, offset=offset, market='US')
+        tracks = r['tracks']['items']
+        data.extend(tracks)
+        offset += batch
+        if len(tracks) < batch:
+            break
+    return data
+
+def ingest_top_100_tracks(click_client, spotify_client, query_argument):
+    create_tables_with_tracks(click_client)
+    tracks = fetch_tracks(spotify_client, query=query_argument)
+    d = []
+    for t in tracks:
+        i = t.get('id','')
+        n = t.get('name','')
+        p = t.get('popularity',0)
+        a = t.get('artists',[])
+        a_str = ", ".join(x['name'] for x in a)
+        d.append([i, n, a_str, p])
+    if d:
+        click_client.insert('default.tracks', d, column_names=['track_id','track_name','artist','popularity'])
+
+def run_ingest(args=None):
+    query_argument = sys.argv[1]
+    create_tables_with_tracks(main.CLICK_CLIENT)
+    if not hasattr(main, 'CLICK_CLIENT') or not hasattr(main, 'SPOTIFY_CLIENT'):
+        logger.error("Global clients not found.")
+        return
+    c = main.CLICK_CLIENT
+    s = main.SPOTIFY_CLIENT
+    t = time.time()
+    ingest_top_100_tracks(c, s, query_argument)
+    e = time.time() - t
+    logger.info(f"Ingest done in {e:.2f}s.")
 
 if __name__ == "__main__":
-    main()
+    main.main()
+    run_ingest()
