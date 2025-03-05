@@ -2,20 +2,30 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
+    environment:
+      CLICKHOUSE_USER: "default"
+      CLICKHOUSE_PASSWORD: "default"
+      CLICKHOUSE_DB: "default"
     ports:
       - "9000:9000"
       - "8123:8123"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   spotify_ingest:
     build:
       context: ./data_ingesting
       dockerfile: Dockerfile
-    container_name: spotify_ingest
-    env_file: data_ingesting/.env
     depends_on:
-      - clickhouse
+      clickhouse:
+        condition: service_healthy
+    command: ["python", "data_ingest.py", "HELLO_WORLD"]
 
 volumes:
   clickhouse_data: {}
