@@ -18,14 +18,16 @@ services:
       retries: 5
       start_period: 5s
 
-  spotify_ingest:
+#неюзабельно, переписать))
+
+  pipeline:
     build:
-      context: ./data_ingesting
+      context: ./src
       dockerfile: Dockerfile
     depends_on:
       clickhouse:
         condition: service_healthy
-    command: ["python", "data_ingest.py", "HELLO_WORLD"]
+    command: ["python", "main.py"]
 
 volumes:
   clickhouse_data: {}
