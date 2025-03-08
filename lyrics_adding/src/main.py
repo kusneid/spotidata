@@ -35,10 +35,10 @@ def init_genius():
     return Genius(genius_access_token, skip_non_songs=True, excluded_terms=["(Remix)", "(Live)"], remove_section_headers=True)
 
 def main():
-    genius_instance = init_genius()
-    clickhouse_instance = init_clickhouse()
-    tracks = clickhouse_instance.command("select track_name from tracks ;")
-    print(tracks)
+    global GENIUS_INSTANCE, CLICKHOUSE_INSTANCE
+    GENIUS_INSTANCE = init_genius()
+    CLICKHOUSE_INSTANCE = init_clickhouse()
+    
     
     
     
