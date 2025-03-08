@@ -7,16 +7,20 @@ from loguru import logger
 def create_tables_with_tracks(client):
     q = """
    CREATE TABLE IF NOT EXISTS default.tracks (
-    track_id String,
+    track_id String PRIMARY KEY,
     track_name String,
     artist String,
     popularity UInt32
-) ENGINE = MergeTree()
+) ENGINE = ReplacingMergeTree()
 ORDER BY track_id;
 
     """
     client.command(q)
 
+def delete_duplicates(client):
+    q="""OPTIMIZE TABLE tracks FINAL;
+    """
+    client.command(q)
 
 
 
@@ -76,6 +80,7 @@ def run_ingest(args=None):
     s = main.SPOTIFY_CLIENT
     t = time.time()
     ingest_top_100_tracks(c, s, query_argument)
+    delete_duplicates(c)
     e = time.time() - t
     logger.info(f"Ingest done in {e:.2f}s.")
 
