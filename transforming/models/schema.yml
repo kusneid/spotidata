@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: default
+    database: default  
+    schema: default    
+    tables:
+      - name: tracks
+        identifier: tracks

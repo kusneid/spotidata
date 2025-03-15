@@ -1,0 +1,14 @@
+clickhouse_dev:
+  target: dev
+  outputs:
+    dev:
+      type: clickhouse
+      driver: http
+      host: 'localhost'
+      port: 8123
+      user: 'default'
+      password: 'default'
+      secure: false
+      verify: false
+      database: ''
+      schema: 'default'
