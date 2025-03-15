@@ -11,9 +11,9 @@ def create_tables_with_tracks(client):
     track_name String,
     artist String,
     popularity UInt32
-) ENGINE = ReplacingMergeTree()
-ORDER BY track_id;
-
+    ) ENGINE = ReplacingMergeTree()
+    
+    ORDER BY track_id;
     """
     client.command(q)
 
@@ -24,25 +24,31 @@ def delete_duplicates(client):
 
 
 
-def fetch_tracks(spotify_client, query):
-    data = []
-    offset = 0
-    limit = 50
-    while offset < 100:
-        batch = min(limit, 100 - offset)
-        r = spotify_client.search(
-            q=query,
-            type='track',
-            limit=batch,
-            offset=offset,
-            market='US')
-        tracks = r['tracks']['items']
-        data.extend(tracks)
-        offset += batch
-        if len(tracks) < batch:
-            break
-    return data
-
+def fetch_tracks(spotify_client,query):
+    years = [
+        "2025", "2024", "2023", "2022", "2021",
+        "2020", "2019", "2018", "2017", "2016",
+        "2015", "2014", "2013", "2012", "2011", "2010"
+    ]
+    all_tracks = []
+    for y in years:
+        offset = 0
+        limit = 50
+        while offset < 100:
+            batch = min(limit, 100 - offset)
+            resp = spotify_client.search(
+                q=f"year:{y}" + ' track:'+query,
+                type="track",
+                limit=batch,
+                offset=offset,
+                market="US"
+            )
+            items = resp["tracks"]["items"]
+            all_tracks.extend(items)
+            offset += batch
+            if len(items) < batch:
+                break
+    return all_tracks
 
 def ingest_top_100_tracks(click_client, spotify_client, query_argument):
     create_tables_with_tracks(click_client)
@@ -67,6 +73,11 @@ def ingest_top_100_tracks(click_client, spotify_client, query_argument):
 
 
 def run_ingest(args=None):
+    if args is None:
+        args = sys.argv
+    if len(args) < 2:
+        logger.error("Please provide a query argument.")
+        return
     query_argument = sys.argv[1]
     create_tables_with_tracks(main.CLICK_CLIENT)
     if not hasattr(
@@ -82,7 +93,7 @@ def run_ingest(args=None):
     ingest_top_100_tracks(c, s, query_argument)
     delete_duplicates(c)
     e = time.time() - t
-    logger.info(f"Ingest done in {e:.2f}s.")
+    logger.info(f"Ingest done in {e:.3f}s.")
 
 
 if __name__ == "__main__":

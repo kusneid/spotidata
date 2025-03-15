@@ -12,14 +12,17 @@ def enrich_lyrics():
 
     for track, artist in zip(tracklist, artistlist):
         lyrics = data_requesting.get_lyrics(track, artist, geniusInstance)
+        print(f"tracks processed: {tracksAdded + tracksFailed}/{tracksLength}")
         if lyrics:
             query = f"ALTER TABLE tracks UPDATE lyrics = '{lyrics}' WHERE track_name = '{track.replace("'", "''")}';"
             clickhouseInstance.command(query)
             tracksAdded += 1
             print(f"Lyrics for '{track}' by '{artist}' added successfully.")
+            
         else:
             tracksFailed += 1
             print(f"Lyrics not found for '{track}' by '{artist}'.")
+        
     
     print("Lyrics enrichment completed.", f"Tracks added: {tracksAdded}", f"Tracks failed: {tracksFailed}", f"{tracksLength} tracks processed.")
 
