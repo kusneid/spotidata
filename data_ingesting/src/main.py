@@ -12,7 +12,7 @@ def init_env_variables():
         logger.info("Environment variables loaded successfully.")
     except Exception as e:
         logger.error(f"Failed to load environment variables: {e}")
-    return os.getenv('CLIENT_ID'), os.getenv('CLIENT_SECRET')
+    return os.getenv('SPOTIFY_CLIENT_ID'), os.getenv('SPOTIFY_CLIENT_SECRET')
 
 
 def init_clickhouse():

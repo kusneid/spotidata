@@ -1,0 +1,8 @@
+name: 'clickhouse_clear'
+version: '1.0.0'
+config-version: 2
+
+profile: 'clickhouse_dev'
+
+model-paths: ["models"]
+
