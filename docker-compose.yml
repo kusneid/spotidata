@@ -1,4 +1,22 @@
+version: '3.8'
+
 services:
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
@@ -18,16 +36,36 @@ services:
       retries: 5
       start_period: 5s
 
-#неюзабельно, переписать))
-
-  pipeline:
-    build:
-      context: ./src
-      dockerfile: Dockerfile
+  airflow:
+    image: apache/airflow:latest
+    container_name: airflow
+    environment:
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow:airflow@postgres/airflow"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__FERNET_KEY: 'pZru00HKZLUwyLvi2zlIy-wWBLb57ZTsnJUKoLLKUPA='
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: '4WRtqL_PqNz7Cv-F3uSqa4PhtZGKMJ69EzIgKIHwLN0' 
+      AIRFLOW_UID: '1000'
+      PYTHONPATH: '/opt/airflow/src'
     depends_on:
-      clickhouse:
+      postgres:
         condition: service_healthy
-    command: ["python", "main.py"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+      - airflow_venv:/opt/airflow/my_venv
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow connections create-default-connections &&
+      airflow users create --username admin --password admin --firstname First --lastname Last --role Admin --email admin@example.com &&
+      airflow webserver -p 8080 & airflow scheduler
+      "
 
 volumes:
+  postgres_data: {}
   clickhouse_data: {}
+  airflow_venv: {}

@@ -1,33 +1,7 @@
-import os
-import clickhouse_connect
-from dotenv import load_dotenv
+import general.base_utils as general
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from loguru import logger
-
-
-def init_env_variables():
-    try:
-        load_dotenv()
-        logger.info("Environment variables loaded successfully.")
-    except Exception as e:
-        logger.error(f"Failed to load environment variables: {e}")
-    return os.getenv('SPOTIFY_CLIENT_ID'), os.getenv('SPOTIFY_CLIENT_SECRET')
-
-
-def init_clickhouse():
-    try:
-        client = clickhouse_connect.get_client(
-            host='localhost',
-            port=8123,
-            username='default',
-            password='default'
-        )
-        logger.info("Connected to Clickhouse successfully.")
-        return client
-    except Exception as e:
-        logger.error(f"FAILED TO CONNECT TO CLICKHOUSE: {e}")
-        return None
 
 
 def init_spotify(client_id, client_secret):
@@ -47,15 +21,14 @@ def init_spotify(client_id, client_secret):
 
 def main():
     global CLICK_CLIENT, SPOTIFY_CLIENT
+    envs = general.init_env_variables('SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET')
 
-    client_id, client_secret = init_env_variables()
-
-    CLICK_CLIENT = init_clickhouse()
+    CLICK_CLIENT = general.init_clickhouse()
     if CLICK_CLIENT is None:
         logger.error("Clickhouse client initialization failed. Exiting.")
         return
 
-    SPOTIFY_CLIENT = init_spotify(client_id, client_secret)
+    SPOTIFY_CLIENT = init_spotify(envs['SPOTIFY_CLIENT_ID'], envs['SPOTIFY_CLIENT_SECRET'])
     if SPOTIFY_CLIENT is None:
         logger.error("Spotify client initialization failed. Exiting.")
         return
