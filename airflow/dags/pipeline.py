@@ -9,7 +9,6 @@ with DAG(
     catchup=False
 ) as dag:
 
-    # 1) Создание/обновление виртуального окружения (один раз при первом запуске)
     create_venv = BashOperator(
         task_id='create_venv',
         bash_command="""
