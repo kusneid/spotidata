@@ -14,7 +14,11 @@ def enrich_lyrics():
         lyrics = data_requesting.get_lyrics(track, artist, geniusInstance)
         print(f"tracks processed: {tracksAdded + tracksFailed}/{tracksLength}")
         if lyrics:
-            query = f"ALTER TABLE tracks UPDATE lyrics = '{lyrics}' WHERE track_name = '{track.replace("'", "''")}';"
+            query = f"""
+            ALTER TABLE tracks
+            UPDATE lyrics = '{lyrics}'
+            WHERE track_name = '{track.replace("'", "''")}';
+            """
             clickhouseInstance.command(query)
             tracksAdded += 1
             print(f"Lyrics for '{track}' by '{artist}' added successfully.")
