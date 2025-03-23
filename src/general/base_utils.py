@@ -6,7 +6,7 @@ from loguru import logger
 def init_clickhouse():
     try:
         client = clickhouse_connect.get_client(
-            host='localhost',
+            host='clickhouse',
             port=8123,
             username='default',
             password='default'
